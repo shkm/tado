@@ -1,6 +1,6 @@
 # Tado
 
-Really simple gem for interacting with Tado's V2 API. The API is still officially closed, so I followed [this excellent blog post](http://blog.scphillips.com/posts/2017/01/the-tado-api-v2/) by @scp93ch.
+Really simple gem for interacting with Tado's V2 API. The API is still officially closed, so I followed [this excellent blog post](http://blog.scphillips.com/posts/2017/01/the-tado-api-v2/) by [Stephen C Phillips](https://github.com/scp93ch).
 
 Note that the auth response is cached to `~/.tado_auth`.
 
