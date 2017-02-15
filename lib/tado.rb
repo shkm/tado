@@ -25,19 +25,19 @@ class Tado
     get('me')
   end
 
-  def home(home_id = @home_id)
+  def home(home_id: @home_id)
     get ['homes', home_id].join('/')
   end
 
-  def weather(home_id = @home_id)
+  def weather(home_id: @home_id)
     get ['homes', home_id, 'weather'].join('/')
   end
 
-  def zones(home_id = @home_id)
+  def zones(home_id: @home_id)
     get ['homes', home_id, 'zones'].join('/')
   end
 
-  def zone_state(home_id = @home_id, zone = 1)
+  def zone_state(home_id: @home_id, zone: 1)
     get ['homes', home_id, 'zones', zone, 'state'].join('/')
   end
 
