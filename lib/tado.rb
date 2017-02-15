@@ -13,7 +13,9 @@ class Tado
 
   attr_writer :home_id
 
-  def initialize(username:, password:, home_id: nil)
+  def initialize(username: nil, password: nil, home_id: nil)
+    raise ArgumentError if username.nil? || password.nil?
+
     @username = username
     @password = password
     @home_id = home_id
