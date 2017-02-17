@@ -1,15 +1,15 @@
 require 'net/http'
 require 'json'
 
-class Tado
-  BASE_URI = 'https://my.tado.com/'.freeze
-  AUTH_URI = "#{BASE_URI}oauth/token".freeze
-  API_BASE_URI = "#{BASE_URI}api/v2/".freeze
+require 'tado/auth'
+require 'tado/me'
+require 'tado/home'
 
-  AUTH_FILEPATH = "#{Dir.home}/.tado_auth".freeze
-  AUTH_CLIENT_ID = 'tado-webapp'.freeze
-  AUTH_GRANT_TYPE = 'password'.freeze
-  AUTH_SCOPE = 'home.user'.freeze
+class Tado::Client
+  include Tado::Auth
+
+  BASE_URI = 'https://my.tado.com/'.freeze
+  API_BASE_URI = "#{BASE_URI}api/v2/".freeze
 
   attr_writer :home_id
 
@@ -22,82 +22,58 @@ class Tado
   end
 
   def me
-    get('me')
+    wrap Tado::Me, 'me'
   end
 
   def home(home_id: @home_id)
-    get ['homes', home_id].join('/')
+    wrap Tado::Home, 'homes', home_id
   end
 
   def weather(home_id: @home_id)
-    get ['homes', home_id, 'weather'].join('/')
+    wrap Tado::Wrapper, 'homes', home_id, 'weather'
   end
 
   def zones(home_id: @home_id)
-    get ['homes', home_id, 'zones'].join('/')
+    wrap_array Tado::Wrapper, 'homes', home_id, 'zones'
   end
 
   def zone_state(home_id: @home_id, zone: 1)
-    get ['homes', home_id, 'zones', zone, 'state'].join('/')
+    wrap Tado::Wrapper, 'homes', home_id, 'zones', zone, 'state'
   end
 
-  private
+  def devices(home_id: @home_id)
+    wrap_array Tado::Wrapper, 'homes', home_id, 'devices'
+  end
 
-  def get(path)
-    uri = URI("#{API_BASE_URI}#{path}")
-
-    request = Net::HTTP::Get.new(uri)
-    request['Authorization'] = "Bearer #{auth_token}"
-
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-      http.request(request)
-    end
+  def get(*path)
+    uri = construct_uri(path)
+    response = request_with_auth(uri)
 
     JSON.parse(response.body)
   end
 
-  def auth_token
-    return auth['access_token'] unless auth_expired?
+  private
 
-    authorize
+  def wrap(klass, *path)
+    klass.new self, get(path)
   end
 
-  def authorize
-    response = Net::HTTP.post_form(URI(AUTH_URI),
-                                   client_id: AUTH_CLIENT_ID,
-                                   grant_type: AUTH_GRANT_TYPE,
-                                   scope: AUTH_SCOPE,
-                                   username: @username,
-                                   password: @password)
-
-    @auth = JSON.parse(response.body)
-    @auth_expiry = nil
-
-    write_auth
-
-    @auth['access_token']
+  def wrap_array(klass, *path)
+    get(path).map do |entry|
+      klass.new self, entry
+    end
   end
 
-  def auth_expired?
-    return true unless auth_exists?
-    return true if Time.now >= auth_expires_at
+  def request_with_auth(uri)
+    request = Net::HTTP::Get.new(uri)
+    request['Authorization'] = "Bearer #{auth_token(BASE_URI)}"
 
-    false
+    Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      http.request(request)
+    end
   end
 
-  def auth_expires_at
-    @auth_expiry ||= (File.mtime(AUTH_FILEPATH) + auth['expires_in'].to_i)
-  end
-
-  def auth
-    @auth ||= JSON.parse(File.read(AUTH_FILEPATH))
-  end
-
-  def auth_exists?
-    File.exist?(AUTH_FILEPATH)
-  end
-
-  def write_auth
-    File.open(AUTH_FILEPATH, 'w') { |file| file.write(JSON.dump(@auth)) }
+  def construct_uri(*path)
+    URI("#{API_BASE_URI}#{path.join('/')}")
   end
 end
