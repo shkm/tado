@@ -1,6 +1,6 @@
 module Tado::Auth
   AUTH_FILEPATH = "#{Dir.home}/.tado_auth".freeze
-  AUTH_CLIENT_ID = 'tado-webapp'.freeze
+  AUTH_CLIENT_ID = 'tado-web-app'.freeze
   AUTH_GRANT_TYPE = 'password'.freeze
   AUTH_SCOPE = 'home.user'.freeze
 
@@ -13,6 +13,7 @@ module Tado::Auth
   def authorize(base_uri)
     response = Net::HTTP.post_form(URI("#{base_uri}oauth/token"),
                                    client_id: AUTH_CLIENT_ID,
+                                   client_secret: 'wZaRN7rpjn3FoNyF5IFuxg9uMzYJcvOoQ8QWiIqS3hfk6gLhVlG57j5YNoZL2Rtc',
                                    grant_type: AUTH_GRANT_TYPE,
                                    scope: AUTH_SCOPE,
                                    username: @username,
