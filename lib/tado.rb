@@ -8,6 +8,7 @@ require 'tado/home'
 class Tado::Client
   include Tado::Auth
 
+  AUTH_BASE_URI = 'https://auth.tado.com/'.freeze
   BASE_URI = 'https://my.tado.com/'.freeze
   API_BASE_URI = "#{BASE_URI}api/v2/".freeze
 
@@ -66,7 +67,7 @@ class Tado::Client
 
   def request_with_auth(uri)
     request = Net::HTTP::Get.new(uri)
-    request['Authorization'] = "Bearer #{auth_token(BASE_URI)}"
+    request['Authorization'] = "Bearer #{auth_token(AUTH_BASE_URI)}"
 
     Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
       http.request(request)
